@@ -1,0 +1,32 @@
+services:
+  app:
+    build:
+      context: .
+      target: development
+    command: ['bun', 'run', 'start:dev']
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      CHOKIDAR_USEPOLLING: 'true'
+    ports:
+      - '${HOST_POST:-3000}:3000'
+    volumes:
+      - .:/app
+      - /app/node_modules
+    stdin_open: true
+    tty: true
+  migrate:
+    profiles: ['migrations']
+    build:
+      context: .
+      target: development
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=development
+    command: ['bunx', 'drizzle-kit', 'migrate']
+    volumes:
+      - .:/app
+      - /app/node_modules
