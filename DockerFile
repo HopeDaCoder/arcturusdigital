@@ -1,29 +1,39 @@
-FROM base AS install
-COPY package*.json bun.lock ./
+# --- Stage 1: Build ---
+FROM oven/bun:1 AS builder
+
+WORKDIR /app
+
+# Copy package management files
+COPY package.json bun.lockb* ./
+
+# Install dependencies
 RUN bun install --frozen-lockfile
 
-
-FROM install AS development
-ENV NODE_ENV=development
+# Copy source code and configuration files
 COPY . .
-EXPOSE 3000
-CMD ["bun", "run", "start:dev"]
 
-FROM install AS build
-COPY . .
+# Build the NestJS application
 RUN bun run build
 
-# Keep only runtime dependencies in the final prod image
-FROM base AS production-dependencies
-COPY package*.json bun.lock ./
+# --- Stage 2: Production Runtime ---
+FROM oven/bun:1-slim AS runner
+
+WORKDIR /app
+
+# Set node environment to production
+ENV NODE_ENV=production
+
+# Copy package files and install production dependencies only
+COPY package.json bun.lockb* ./
 RUN bun install --production --frozen-lockfile
 
-FROM base AS production
-ENV NODE_ENV=production
-ENV PORT=3000
-COPY --from=production-dependencies /app/node_modules ./node_modules
-COPY --from=build /app/package.json ./package.json
-COPY --from=build /app/dist ./dist
-USER bun
+# Copy compiled application code and schema files from builder
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/drizzle ./drizzle
+COPY --from=builder /app/drizzle.config.ts ./drizzle.config.ts
+
+# Expose NestJS application port
 EXPOSE 3000
-CMD [ "bun", "run", "dist/main.js" ]
+
+# Start the application using Bun
+CMD ["bun", "run", "dist/main.js"]
