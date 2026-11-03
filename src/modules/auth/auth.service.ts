@@ -4,6 +4,8 @@ import {
   UnauthorizedException,
   Inject,
 } from '@nestjs/common';
+import cookieParser from 'cookie-parser';
+
 import * as bcrypt from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
 import { eq } from 'drizzle-orm';
@@ -73,7 +75,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials.');
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
 
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials.');
@@ -81,6 +83,8 @@ export class AuthService {
 
     const token = await this.generateTokens(user.id, user.email, user.role);
     await this.updateRefreshTokenHash(user.id, token.refreshToken);
+
+    console.log(cookieParser);
 
     return {
       user: {
