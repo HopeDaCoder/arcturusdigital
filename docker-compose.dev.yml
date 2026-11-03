@@ -7,9 +7,9 @@ services:
     container_name: nestjs_bun_api_dev
     restart: unless-stopped
     ports:
-      - '3000:3000'
+      - '3300:3300'
     environment:
-      PORT: 3000
+      PORT: 3300
       NODE_ENV: development
       DATABASE_URL: postgresql://postgres:${DATABASE_PASSWORD}@db:5432/acturusdigital_db
       SUPABASE_URL: ${DATABASE_URL}
